@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
 
-const socket = io.connect("http://localhost:3001");
+const socket = io.connect("http://localhost:8000");
 
 function Chat() {
   const [message, setMessage] = useState("");
@@ -62,7 +62,7 @@ function Chat() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              className="absolute bottom-4 left-4 p-2 bg-white text-black rounded-md focus:outline-none"
+              className="absolute bottom-4 left-4 p-2 bg-white text-black rounded-md w-[90%] focus:outline-none"
               placeholder="Write Something..."
             />
             <button
