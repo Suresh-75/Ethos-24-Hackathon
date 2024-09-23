@@ -1,17 +1,26 @@
-/* eslint-disable no-unused-vars */
-import React, { useState } from "react";
-import { io } from "socket.io-client";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const socket = io.connect("http://localhost:3001");
 function Home() {
-  // const [message,setMessage] = useState()
-  const sendMessage = () => {
-    socket.emit("send_message", { message: "hello" });
-  };
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
+
   return (
     <div>
-      <input placeholder="username.." />
-      <button onClick={sendMessage}>Join the Chat</button>
+      <input
+        placeholder="username.."
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <button
+        onClick={() => {
+          if (username.trim()) {
+            navigate("/chat", { state: { username } });
+          }
+        }}
+      >
+        Join the Chat
+      </button>
     </div>
   );
 }
