@@ -1,10 +1,9 @@
 /* eslint-disable no-unused-vars */
 // import { useEffect } from "react";
-import Users from "./components/Users";
 import Chat from "./Pages/Chat";
 import Home from "./Pages/Home";
 import { Routes, Route } from "react-router-dom";
-
+import "@radix-ui/themes/styles.css";
 function App() {
   return (
     <Routes>

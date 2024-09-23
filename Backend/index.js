@@ -13,13 +13,27 @@ const io = new Server(server, {
   },
 });
 
+let users = [];
 io.on("connection", (socket) => {
-  console.log("Connected", socket.id);
+  socket.on("user-connected", (username) => {
+    const newUser = { username: username.username, id: socket.id };
+    users.push(newUser);
+    console.log(users);
+    io.emit("All-Users", { users });
+  });
   socket.on("send_message", (payload) => {
-    io.emit("receive_message", payload);
+    const sId = payload.selectedUser;
+    console.log(payload);
+    const isThere = users.some((u) => {
+      return u.id == sId;
+    });
+    if (isThere) io.to(sId).emit("receive_message", payload);
   });
   socket.on("disconnect", () => {
-    console.log("User Disconnected", socket.id);
+    users = users.filter((user) => {
+      return user.id != socket.id;
+    });
+    io.emit("All-Users", { users });
   });
 });
 
