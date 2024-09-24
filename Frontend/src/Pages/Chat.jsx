@@ -1,6 +1,6 @@
 import { Avatar, Box, Card, Flex, Text } from "@radix-ui/themes";
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 const socket = io.connect("http://localhost:8000");
@@ -8,14 +8,43 @@ const socket = io.connect("http://localhost:8000");
 function Chat() {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
+  const [selectedChat, setSelectedChat] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelUser] = useState();
   const [selectedUserName, setSelUserName] = useState();
   const location = useLocation();
   const username = location.state?.username || "Anonymous";
+
+  useEffect(() => {
+    let c = [];
+    chat.forEach((ch) => {
+      if (ch.username == selectedUserName) {
+        c = ch.chats;
+      }
+    });
+    setSelectedChat(c);
+  }, [chat, selectedUserName]);
+
+  function onSelectFriend(name) {
+    let c = [];
+    chat.forEach((ch) => {
+      if (ch.username == name) {
+        c = ch.chats;
+      }
+    });
+    setSelectedChat(c);
+  }
+
   const sendMessage = () => {
     if (message.trim()) {
       setChat((prevChat) => [...prevChat, { message, username, selectedUser }]);
+      const newChat = chat;
+      newChat.forEach((ch) => {
+        if (ch.username == selectedUserName) {
+          ch.chats.push({ sender: username, msg: message });
+        }
+      });
+      setChat(newChat);
       socket.emit("send_message", { message, username, selectedUser });
       setMessage("");
     }
@@ -24,15 +53,7 @@ function Chat() {
     socket.emit("user-connected", { username });
   }, [username]);
   useEffect(() => {
-    const receiveMessage = (data) => {
-      console.log(data.username, " ", selectedUserName);
-      if (data.username != selectedUserName) return;
-      console.log(data);
-      setChat((prevChat) => [...prevChat, data]);
-      console.log([...chat, data]);
-    };
     const getUsers = (d) => {
-      console.log(d.users);
       const newU = d.users.filter((u) => {
         return u.username != username;
       });
@@ -40,10 +61,26 @@ function Chat() {
         (user, index, self) =>
           index === self.findIndex((u) => u.username === user.username)
       );
-
       setUsers(uniqueUsersByUsername);
+      const newChat = [];
+      uniqueUsersByUsername.forEach((u) => {
+        newChat.push({ username: u.username, chats: [] });
+      });
+      setChat(newChat);
     };
     socket.on("All-Users", getUsers);
+
+    // get chat from server
+    const receiveMessage = (data) => {
+      const newChat = chat;
+      newChat.forEach((ch) => {
+        if (ch.username == data.username) {
+          ch.chats.push({ sender: data.username, msg: data.message });
+        }
+      });
+      setChat([...newChat]);
+      // if (data.username == selectedUserName) onSelectFriend(data.username);
+    };
     socket.on("receive_message", receiveMessage);
 
     return () => {
@@ -73,7 +110,8 @@ function Chat() {
                     if (selectedUser == u.id) return;
                     setSelUser(u.id);
                     setSelUserName(u.username);
-                    setChat([]);
+                    setSelectedChat([]);
+                    onSelectFriend(u.username);
                   }}
                 >
                   <Card className="bg-white transition hover:bg-purple-200 hover:cursor-pointer">
@@ -102,14 +140,16 @@ function Chat() {
             <div className="overflow-y-auto h-[80vh]">
               {selectedUser ? (
                 <>
-                  {chat.map((msg, index) => (
+                  {selectedChat.map((msg, index) => (
                     <p
                       key={index}
                       className={`mb-2 text-white ${
-                        msg.username === username ? "text-right" : "text-left"
+                        msg.sender === username
+                          ? "text-right"
+                          : "textmessage-left"
                       }`}
                     >
-                      <strong>{msg.username}</strong>: {msg.message}
+                      <strong>{msg.sender}</strong>: {msg.msg}
                     </p>
                   ))}
                   <input
