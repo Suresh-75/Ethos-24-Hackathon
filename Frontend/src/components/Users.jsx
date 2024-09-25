@@ -1,7 +1,7 @@
 import { Avatar, Box, Card, Flex, Text } from "@radix-ui/themes";
 
 const truncate = (text, len) => {
-  if (text.length > len && text.length > 0) {
+  if (text?.length > len && text.length > 0) {
     return `${text.split(" ").slice(0, len).join(" ")} ...`;
   } else {
     return text;
@@ -32,7 +32,11 @@ function Users({
                 onSelectFriend(u.username);
               }}
             >
-              <Card className="bg-white transition hover:bg-purple-200 hover:cursor-pointer">
+              <Card
+                className={`  transition ${
+                  selectedUser == u.id ? "bg-white" : "bg-grey-200"
+                }  hover:bg-purple-200 hover:cursor-pointer `}
+              >
                 <Flex gap="2" align="center">
                   <Avatar
                     size="4"

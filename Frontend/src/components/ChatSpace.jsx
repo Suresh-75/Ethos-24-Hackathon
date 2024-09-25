@@ -31,7 +31,7 @@ function ChatSpace({
           />
           <button
             onClick={sendMessage}
-            className="absolute bottom-4 right-4 bg-blue-500 text-white p-2 rounded-md"
+            className=" absolute bottom-4 right-4 bg-violet-500 text-white p-2 rounded-md"
           >
             Send Message
           </button>

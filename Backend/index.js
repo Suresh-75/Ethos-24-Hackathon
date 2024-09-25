@@ -15,15 +15,20 @@ const io = new Server(server, {
 
 let users = [];
 io.on("connection", (socket) => {
-  socket.on("user-connected", (username) => {
-    const newUser = { username: username.username, id: socket.id };
+  socket.on("user-connected", (payload) => {
+    // console.log(payload);
+    const newUser = {
+      username: payload.username,
+      id: socket.id,
+      key: payload.key,
+    };
     users.push(newUser);
-    console.log(users);
+    // console.log(users);
     io.emit("All-Users", { users });
   });
   socket.on("send_message", (payload) => {
-    const sId = payload.selectedUser;
     console.log(payload);
+    const sId = payload.selectedUser;
     const isThere = users.some((u) => {
       return u.id == sId;
     });
