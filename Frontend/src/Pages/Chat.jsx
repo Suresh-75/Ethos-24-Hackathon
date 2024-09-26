@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import Users from "../components/Users";
 import ChatSpace from "../components/ChatSpace";
-
+import E2EE from "@chatereum/react-e2ee";
 const socket = io.connect("http://localhost:8000");
 
 function Chat() {
@@ -14,6 +14,11 @@ function Chat() {
   const [selectedUser, setSelUser] = useState();
   const [selectedUserName, setSelUserName] = useState();
   const location = useLocation();
+
+  //keys
+  const [publicKey, setPublicKey] = useState(null);
+  const [privateKey, setPrivateKey] = useState(null);
+
   const username = location.state?.username || "Anonymous";
 
   useEffect(() => {
@@ -36,7 +41,7 @@ function Chat() {
     setSelectedChat(c);
   }
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (message.trim()) {
       setChat((prevChat) => [...prevChat, { message, username, selectedUser }]);
       const newChat = chat;
@@ -46,12 +51,32 @@ function Chat() {
         }
       });
       setChat(newChat);
-      socket.emit("send_message", { message, username, selectedUser });
+
+      let publicKeyOfFrnd = null;
+
+      users.forEach((ch) => {
+        if (ch.username == selectedUserName) {
+          publicKeyOfFrnd = ch.key;
+          return;
+        }
+      });
+
+      const encrypted = await E2EE.encryptPlaintext({
+        public_key: publicKeyOfFrnd,
+        plain_text: message,
+      });
+
+      socket.emit("send_message", { encrypted, username, selectedUser });
       setMessage("");
     }
   };
   useEffect(() => {
-    socket.emit("user-connected", { username });
+    (async () => {
+      const keys = await E2EE.getKeys();
+      setPublicKey(keys.public_key);
+      setPrivateKey(keys.private_key);
+      socket.emit("user-connected", { username, key: keys.public_key });
+    })();
   }, [username]);
   useEffect(() => {
     const getUsers = (d) => {
@@ -72,14 +97,23 @@ function Chat() {
     socket.on("All-Users", getUsers);
 
     // get chat from server
-    const receiveMessage = (data) => {
-      const newChat = chat;
-      newChat.forEach((ch) => {
-        if (ch.username == data.username) {
-          ch.chats.push({ sender: data.username, msg: data.message });
-        }
-      });
-      setChat([...newChat]);
+    const receiveMessage = async (data) => {
+      try {
+        const decrypted = await E2EE.decryptForPlaintext({
+          encrypted_text: data.encrypted,
+          private_key: privateKey,
+        });
+        console.log(decrypted);
+        const newChat = chat;
+        newChat.forEach((ch) => {
+          if (ch.username == data.username) {
+            ch.chats.push({ sender: data.username, msg: decrypted });
+          }
+        });
+        setChat([...newChat]);
+      } catch (e) {
+        console.log(e);
+      }
       // if (data.username == selectedUserName) onSelectFriend(data.username);
     };
     socket.on("receive_message", receiveMessage);

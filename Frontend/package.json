@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@chatereum/react-e2ee": "^3.0.1",
     "@radix-ui/themes": "^3.1.3",
     "nanoid": "^5.0.7",
+    "openpgp": "^5.11.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
