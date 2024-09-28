@@ -99,11 +99,11 @@ function Chat() {
     // get chat from server
     const receiveMessage = async (data) => {
       try {
-        // const decrypted = await E2EE.decryptForPlaintext({
-        //   encrypted_text: data.encrypted,
-        //   private_key: privateKey,
-        // });
-        // console.log(decrypted);
+        const decrypted = await E2EE.decryptForPlaintext({
+          encrypted_text: data.encrypted,
+          private_key: privateKey,
+        });
+        console.log(decrypted);
         const newChat = chat;
         newChat.forEach((ch) => {
           if (ch.username == data.username) {
